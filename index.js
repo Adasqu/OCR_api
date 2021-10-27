@@ -1,9 +1,6 @@
 const app = require("fastify")({ logger: true });
 const fileUpload = require("fastify-file-upload");
-const { createWorker } = require("tesseract.js");
-const { Poppler } = require("node-poppler");
-const fs = require("fs").promises;
-const path = require('path');
+const { OCR } = require("./modules/ocr")
 
 
 app.register(fileUpload, {
@@ -11,16 +8,12 @@ app.register(fileUpload, {
   safeFileNames: true,
   preserveExtension: true
 });
-const worker = createWorker({
-  logger: (m) => console.log(m),
-});
+
 
 (async () => {
-  await worker.load();
-  await worker.loadLanguage("pol");
-  await worker.initialize("pol");
-  //await worker.terminate();
+  await OCR.prepareWorker()
 })();
+
 app.get("/upload", async function (req, reply) {
   reply.type("text/html");
   reply.send(`<html><body><form action="/upload" method="post" enctype="multipart/form-data">
@@ -45,14 +38,9 @@ app.post("/upload", async function (req, reply) {
   // choose is pdf or image
   if (fileArr[0].mimetype == 'application/pdf') {
 
-    reply.send(readableFile);
   } else {
     const buffer = Buffer.from(fileArr[0].data, "base64");
-    //const image = await fs.readFile(path.join(root + outputFile));
-    const {
-      data: { text },
-    } = await worker.recognize(buffer);
-
+    const text = OCR.readImage(buffer)
     console.log(text);
     reply.send(text);
 
