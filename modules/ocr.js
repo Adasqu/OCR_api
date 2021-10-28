@@ -21,6 +21,6 @@ class OCR {
         } = await this.worker.recognize(buffer);
         return text
     }
-
 }
+
 module.exports.OCR = new OCR

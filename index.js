@@ -1,6 +1,7 @@
 const app = require("fastify")({ logger: true });
 const fileUpload = require("fastify-file-upload");
 const { OCR } = require("./modules/ocr")
+const { readTextFromPDF, convertPDFToPNG } = require("./modules/pdf")
 
 
 app.register(fileUpload, {
@@ -8,7 +9,6 @@ app.register(fileUpload, {
   safeFileNames: true,
   preserveExtension: true
 });
-
 
 (async () => {
   await OCR.prepareWorker()
@@ -36,15 +36,18 @@ app.post("/upload", async function (req, reply) {
   }
 
   // choose is pdf or image
+  var text = ''
   if (fileArr[0].mimetype == 'application/pdf') {
-
+    text = await readTextFromPDF(fileArr[0])
+    if (text == '') {
+      text = await convertPDFToPNG(fileArr[0].name, OCR)
+    }
   } else {
     const buffer = Buffer.from(fileArr[0].data, "base64");
-    const text = OCR.readImage(buffer)
-    console.log(text);
-    reply.send(text);
-
+    text = await OCR.readImage(buffer)
   }
+  reply.send(text);
+
 
 });
 app.listen(3001, '0.0.0.0', (err) => {
