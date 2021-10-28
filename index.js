@@ -1,7 +1,7 @@
 const app = require("fastify")({ logger: true });
 const fileUpload = require("fastify-file-upload");
 const { OCR } = require("./modules/ocr")
-const { readTextFromPDF, convertPDFToPNG } = require("./modules/pdf")
+const { readTextFromPDF, convertPDFToPNG, unlinkUnused } = require("./modules/pdf")
 
 
 app.register(fileUpload, {
@@ -46,6 +46,7 @@ app.post("/upload", async function (req, reply) {
     const buffer = Buffer.from(fileArr[0].data, "base64");
     text = await OCR.readImage(buffer)
   }
+  unlinkUnused(fileArr[0].name)
   reply.send(text);
 
 
