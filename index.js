@@ -2,7 +2,7 @@ const app = require("fastify")({ logger: true });
 const fileUpload = require("fastify-file-upload");
 const { OCR } = require("./modules/ocr")
 const { readTextFromPDF, convertPDFToPNG, unlinkUnused } = require("./modules/pdf")
-
+const parseText = require("./modules/textParser")
 
 app.register(fileUpload, {
   useTempFiles: false,
@@ -47,11 +47,12 @@ app.post("/upload", async function (req, reply) {
     text = await OCR.readImage(buffer)
   }
   unlinkUnused(fileArr[0].name)
+  parseText(text)
   reply.send(text);
 
 
 });
-app.listen(3001, '0.0.0.0', (err) => {
+app.listen(3000, '0.0.0.0', (err) => {
   if (err) throw err;
   console.log(`server listening on ${app.server.address().port}`);
 });
